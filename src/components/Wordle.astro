@@ -248,6 +248,11 @@ import { Icon } from "astro-icon/components";
 
         parent.classList.add("animate-shake");
 
+        // Trigger vibration feedback if supported
+        if ("vibrate" in navigator) {
+          navigator.vibrate([50, 50, 25, 25, 10]);
+        }
+
         setTimeout(() => {
           parent.classList.remove("animate-shake");
         }, 500);
@@ -324,7 +329,7 @@ import { Icon } from "astro-icon/components";
     btn.addEventListener("click", () => {
       // Trigger vibration feedback if supported
       if ("vibrate" in navigator) {
-        navigator.vibrate(100);
+        navigator.vibrate(50);
       }
 
       updateCell(btn.dataset.key);
@@ -332,10 +337,24 @@ import { Icon } from "astro-icon/components";
   });
 
   // Enter button
-  document.getElementById("enter-btn").addEventListener("click", checkWord);
+  document.getElementById("enter-btn").addEventListener("click", () => {
+    // Trigger vibration feedback if supported
+    if ("vibrate" in navigator) {
+      navigator.vibrate(50);
+    }
+
+    checkWord();
+  });
 
   // Delete button
-  document.getElementById("delete-btn").addEventListener("click", deleteLetter);
+  document.getElementById("delete-btn").addEventListener("click", () => {
+    // Trigger vibration feedback if supported
+    if ("vibrate" in navigator) {
+      navigator.vibrate(50);
+    }
+
+    deleteLetter();
+  });
 
   // Keyboard events
   document.addEventListener("keydown", (e) => {
