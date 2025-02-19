@@ -135,7 +135,13 @@ import { Icon } from "astro-icon/components";
 
   function updateCell(letter) {
     if (currentCol < maxCols) {
-      getCurrentCell().textContent = letter;
+      const cell = getCurrentCell();
+      cell.textContent = letter;
+
+      cell.classList.remove("animate-small-scale");
+      void cell.offsetWidth;
+      cell.classList.add("animate-small-scale");
+
       currentCol++;
     }
   }
@@ -197,13 +203,55 @@ import { Icon } from "astro-icon/components";
     }
   }
 
-  function checkWord() {
+  function showToast(message, type = "error") {
+    const toastContainer = document.getElementById("toast-container");
+
+    // Create the toast
+    const toast = document.createElement("div");
+    toast.className = `px-4 py-2 rounded-lg shadow-md text-white text-sm ${
+      type === "success" ? "bg-green-600" : "bg-red-600"
+    } animate-slide-down`;
+
+    toast.textContent = message;
+
+    // Add to container
+    toastContainer.appendChild(toast);
+
+    // Entry animation
+    setTimeout(() => {
+      toast.classList.add("opacity-100", "scale-100");
+    }, 10);
+
+    // Remove after 3s
+    setTimeout(() => {
+      toast.classList.add("animate-slide-up");
+      setTimeout(() => toast.remove(), 300);
+    }, 3000);
+  }
+
+  async function checkWord() {
     if (currentCol === maxCols) {
+      const parent = rows[currentRow];
       const rowCells = rows[currentRow].children;
       let guess = "";
 
       for (let i = 0; i < maxCols; i++) {
         guess += rowCells[i].textContent;
+      }
+
+      // Check if word exists in backend
+      const response = await fetch(`/api/check-word.json?word=${guess}`);
+      const data = await response.json();
+
+      if (!data.exists) {
+        showToast("La palabra no existe", "error");
+
+        parent.classList.add("animate-shake");
+
+        setTimeout(() => {
+          parent.classList.remove("animate-shake");
+        }, 500);
+        return;
       }
 
       for (let i = 0; i < maxCols; i++) {
@@ -225,7 +273,7 @@ import { Icon } from "astro-icon/components";
             "dark:border-yellow-500",
             "text-white"
           );
-          // Solo actualizar si la tecla no está ya marcada como correcta
+          // Only update if the key is not already marked as correct
           const key = document.querySelector(`[data-key="${letter}"]`);
           if (!key.classList.contains("bg-green-600")) {
             updateKeyboardKey(letter, "present");
@@ -271,13 +319,18 @@ import { Icon } from "astro-icon/components";
     }
   }
 
+  // Keyboard
   document.querySelectorAll(".keyboard-btn").forEach((btn) => {
     btn.addEventListener("click", () => updateCell(btn.dataset.key));
   });
 
+  // Enter button
   document.getElementById("enter-btn").addEventListener("click", checkWord);
+
+  // Delete button
   document.getElementById("delete-btn").addEventListener("click", deleteLetter);
 
+  // Keyboard events
   document.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
       checkWord();

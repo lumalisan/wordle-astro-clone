@@ -1,7 +1,7 @@
 import type { APIContext } from 'astro';
 import { WORDS } from '../../data/words';
 
-export async function GET({ params }: APIContext) {
+export function GET({ params }: APIContext) {
     const index = parseInt(params.id!, 10);
     const word = WORDS[index - 1];
 
