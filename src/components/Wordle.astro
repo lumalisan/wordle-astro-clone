@@ -321,7 +321,14 @@ import { Icon } from "astro-icon/components";
 
   // Keyboard
   document.querySelectorAll(".keyboard-btn").forEach((btn) => {
-    btn.addEventListener("click", () => updateCell(btn.dataset.key));
+    btn.addEventListener("click", () => {
+      // Trigger vibration feedback if supported
+      if ("vibrate" in navigator) {
+        navigator.vibrate(50);
+      }
+
+      updateCell(btn.dataset.key);
+    });
   });
 
   // Enter button
