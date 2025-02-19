@@ -1,14 +1,15 @@
 ---
 import { Icon } from "astro-icon/components";
-import { getRandomWord } from "../data/words";
-const word = getRandomWord();
 ---
 
 <main class="flex flex-col grow">
   <h1 class="text-3xl font-bold text-center my-4 dark:text-white">Wordle ES</h1>
 
-  <!-- <p class="text-center mb-4 text-lg font-semibold dark:text-white">
-    Palabra: {word}
+  <!-- <p
+    id="word-display"
+    class="text-center mb-4 text-lg font-semibold dark:text-white"
+  >
+    Cargando palabra...
   </p> -->
 
   <!-- Game board container centered with flexible space -->
@@ -87,14 +88,46 @@ const word = getRandomWord();
   </div>
 </main>
 
-<script is:inline define:vars={{ word }}>
+<script is:inline>
   let currentRow = 0;
   let currentCol = 0;
   const maxRows = 6;
   const maxCols = 5;
+  let word = "";
+
+  async function initGame() {
+    word = await fetchWord();
+    document.getElementById("word-display").textContent = `Palabra: ${word}`;
+  }
+
+  initGame();
 
   const gameBoard = document.getElementById("game-board");
   const rows = gameBoard.getElementsByClassName("row");
+
+  async function fetchWord() {
+    let index = localStorage.getItem("wordIndex");
+
+    if (!index) {
+      index = 1;
+      localStorage.setItem("wordIndex", index);
+    }
+
+    try {
+      const response = await fetch(`/api/${index}.json`);
+      const data = await response.json();
+      return data.word;
+    } catch (error) {
+      console.error("Error fetching word:", error);
+      return null;
+    }
+  }
+
+  function advanceToNextWord() {
+    let index = parseInt(localStorage.getItem("wordIndex"), 10) || 1;
+    localStorage.setItem("wordIndex", index + 1);
+    window.location.reload();
+  }
 
   function getCurrentCell() {
     return rows[currentRow].children[currentCol];
@@ -126,22 +159,39 @@ const word = getRandomWord();
         "dark:bg-gray-700",
         "border-gray-500",
         "text-white",
-        "text-gray-500"
+        "text-gray-500",
+        "hover:bg-green-700",
+        "dark:hover:bg-green-700",
+        "hover:bg-yellow-600",
+        "dark:hover:bg-yellow-600",
+        "hover:bg-gray-200",
+        "dark:hover:bg-gray-200"
       );
 
       // Add new classes based on status
       if (status === "correct") {
-        key.classList.add("bg-green-600", "text-white");
+        key.classList.add(
+          "bg-green-600",
+          "text-white",
+          "hover:bg-green-700",
+          "dark:hover:bg-green-700"
+        );
       } else if (status === "present") {
-        key.classList.add("bg-yellow-500", "text-white");
+        key.classList.add(
+          "bg-yellow-500",
+          "text-white",
+          "hover:bg-yellow-600",
+          "dark:hover:bg-yellow-600"
+        );
       } else if (status === "absent") {
-        // Set key to outline style: transparent background and border colored with absent color
         key.classList.add(
           "border",
           "border-gray-200",
           "dark:border-gray-700",
           "bg-transparent",
-          "text-gray-500"
+          "text-gray-500",
+          "hover:bg-gray-200",
+          "dark:hover:bg-gray-200"
         );
       }
     }
@@ -199,7 +249,7 @@ const word = getRandomWord();
             icon: "success",
             confirmButtonText: "¡Excelente! Otra palabra?",
             theme: localStorage.theme === "dark" ? "dark" : "light",
-          }).then(() => window.location.reload());
+          }).then(() => advanceToNextWord());
         }, 100);
         return;
       }
@@ -215,14 +265,14 @@ const word = getRandomWord();
             icon: "error",
             confirmButtonText: "¡Vuelve a intentarlo!",
             theme: localStorage.theme === "dark" ? "dark" : "light",
-          }).then(() => window.location.reload());
+          }).then(() => advanceToNextWord());
         }, 100);
       }
     }
   }
 
   document.querySelectorAll(".keyboard-btn").forEach((btn) => {
-    btn.addEventListener("click", () => updateCell(btn.textContent));
+    btn.addEventListener("click", () => updateCell(btn.dataset.key));
   });
 
   document.getElementById("enter-btn").addEventListener("click", checkWord);
