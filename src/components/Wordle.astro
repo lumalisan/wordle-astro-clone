@@ -323,8 +323,8 @@ import { Icon } from "astro-icon/components";
   document.querySelectorAll(".keyboard-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       // Trigger vibration feedback if supported
-      if ("vibrate" in navigator) {
-        navigator.vibrate(50);
+      if ("vibrate" in window.navigator) {
+        window.navigator.vibrate(50);
       }
 
       updateCell(btn.dataset.key);
